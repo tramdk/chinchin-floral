@@ -2,16 +2,20 @@
 import React, { useState, useEffect } from 'react';
 import { Routes, Route, Link, useNavigate, useLocation, useParams } from 'react-router-dom';
 import { FloralScene } from './components/FloralScene';
+import { PetalRain } from './components/PetalRain';
 import { ProductSection } from './components/ProductSection';
-import { AdminDashboard } from './pages/AdminDashboard';
-import { AboutUs } from './pages/AboutUs';
-import { Posts } from './pages/Posts';
-import { PostDetail } from './pages/PostDetail';
+
+// Lazy load heavy components and pages (Vercel Best Practice: bundle-dynamic-imports)
+const AdminDashboard = React.lazy(() => import('./pages/AdminDashboard').then(m => ({ default: m.AdminDashboard })));
+const AboutUs = React.lazy(() => import('./pages/AboutUs').then(m => ({ default: m.AboutUs })));
+const Posts = React.lazy(() => import('./pages/Posts').then(m => ({ default: m.Posts })));
+const PostDetail = React.lazy(() => import('./pages/PostDetail').then(m => ({ default: m.PostDetail })));
+const CartView = React.lazy(() => import('./pages/CartView').then(m => ({ default: m.CartView })));
+
 import { ShoppingBag, Menu, X, Heart, MapPin, Camera, Ghost, Calendar, User, LogOut, Settings, Lock, Info, Loader2, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ENDPOINTS, ABOUT_PREVIEW_CONTENT } from './constants';
 import { CartProvider, useCart } from './components/CartContext';
-import { CartView } from './pages/CartView';
 import { AuthProvider, useAuth } from './components/AuthContext';
 import { ToastProvider, useToast } from './components/ToastContext';
 import { UserProfile } from './types';
@@ -241,10 +245,11 @@ const AppContent: React.FC = () => {
   return (
     <div className="min-h-screen bg-floral-petal text-floral-deep selection:bg-floral-rose selection:text-white overflow-x-hidden">
       <ScrollToTop />
+      <PetalRain />
       <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${scrolled || location.pathname !== '/' ? 'bg-white/90 backdrop-blur-md shadow-sm py-4' : 'bg-transparent py-6'}`}>
         <div className="container mx-auto px-6 flex justify-between items-center">
-          <Link to="/" className="flex items-center gap-2 cursor-pointer group">
-            <div className="w-12 h-12 bg-floral-rose rounded-full flex items-center justify-center text-white font-serif font-bold text-3xl shadow-sm group-hover:rotate-12 transition-transform">❁</div>
+          <Link to="/" className="flex items-center gap-2 cursor-pointer group" aria-label="Trang chủ Tiệm hoa của ChinChin">
+            <div className="w-12 h-12 bg-floral-rose rounded-full flex items-center justify-center text-white font-serif font-bold text-3xl shadow-sm group-hover:rotate-12 transition-transform" aria-hidden="true">❁</div>
             <span className="font-serif font-bold text-2xl tracking-tighter text-floral-deep hidden sm:block">Tiệm hoa của ChinChin</span>
           </Link>
 
@@ -269,7 +274,7 @@ const AppContent: React.FC = () => {
                   <span className="text-[10px] text-stone-400 normal-case font-normal leading-none">{user.role === 'admin' ? 'Quản trị viên' : 'Thành viên'}</span>
                   <span className="text-floral-deep normal-case tracking-normal font-bold">{user.name}</span>
                 </div>
-                <button onClick={handleLogout} className="p-2 text-stone-400 hover:text-floral-rose transition-colors" title="Đăng xuất">
+                <button onClick={handleLogout} className="p-2 text-stone-400 hover:text-floral-rose transition-colors" aria-label="Đăng xuất">
                   <LogOut size={18} />
                 </button>
               </div>
@@ -297,7 +302,7 @@ const AppContent: React.FC = () => {
             </Link>
           </div>
 
-          <button className="lg:hidden text-floral-deep p-2" onClick={() => setMenuOpen(!menuOpen)}>
+          <button className="lg:hidden text-floral-deep p-2" onClick={() => setMenuOpen(!menuOpen)} aria-label={menuOpen ? "Đóng menu" : "Mở menu"}>
             {menuOpen ? <X size={28} /> : <Menu size={28} />}
           </button>
         </div>
@@ -334,22 +339,29 @@ const AppContent: React.FC = () => {
       </nav>
 
       <AnimatePresence mode="wait">
-        <Routes location={location} key={location.pathname}>
-          <Route path="/" element={<Home scrollToSection={scrollToSection} />} />
-          <Route path="/about" element={<AboutUs />} />
-          <Route path="/posts" element={<Posts onSelectPost={(id) => navigate(`/posts/${id}`)} />} />
-          <Route path="/posts/:id" element={<PostDetailWrapper />} />
-          <Route path="/cart" element={<CartView />} />
-          <Route
-            path="/admin"
-            element={
-              <ProtectedRoute user={user}>
-                <AdminDashboard />
-              </ProtectedRoute>
-            }
-          />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <React.Suspense fallback={
+          <div className="min-h-[60vh] flex flex-col items-center justify-center gap-6">
+            <div className="w-12 h-12 border-4 border-floral-rose border-t-transparent rounded-full animate-spin" />
+            <p className="font-serif text-xl text-floral-deep italic">Đang chuẩn bị không gian...</p>
+          </div>
+        }>
+          <Routes location={location} key={location.pathname}>
+            <Route path="/" element={<Home scrollToSection={scrollToSection} />} />
+            <Route path="/about" element={<AboutUs />} />
+            <Route path="/posts" element={<Posts onSelectPost={(id) => navigate(`/posts/${id}`)} />} />
+            <Route path="/posts/:id" element={<PostDetailWrapper />} />
+            <Route path="/cart" element={<CartView />} />
+            <Route
+              path="/admin"
+              element={
+                <ProtectedRoute user={user}>
+                  <AdminDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </React.Suspense>
       </AnimatePresence>
 
       <footer className="bg-white border-t border-stone-200 py-20">
@@ -374,12 +386,12 @@ const AppContent: React.FC = () => {
         {loginPromptOpen && (
           <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 md:p-6">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setLoginPromptOpen(false)} className="absolute inset-0 bg-floral-deep/60 backdrop-blur-md" />
-            <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="relative w-full max-w-sm bg-white rounded-[2rem] md:rounded-[2.5rem] p-8 md:p-10 text-center shadow-2xl">
-              <div className="w-16 h-16 md:w-20 md:h-20 bg-floral-rose/10 text-floral-rose rounded-full flex items-center justify-center mx-auto mb-6">
+            <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="relative w-full max-w-sm bg-white/70 backdrop-blur-2xl rounded-[2.5rem] p-8 md:p-10 text-center shadow-2xl border border-white/40">
+              <div className="w-16 h-16 md:w-20 md:h-20 bg-floral-rose/20 text-floral-rose rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
                 <AlertCircle size={32} />
               </div>
-              <h3 className="font-serif text-xl md:text-2xl text-floral-deep mb-4 uppercase">Đăng nhập để tiếp tục</h3>
-              <p className="text-stone-500 mb-8 md:mb-10 leading-relaxed text-sm">Bạn cần đăng nhập tài khoản thành viên để thực hiện thêm sản phẩm vào giỏ hàng.</p>
+              <h3 className="font-serif text-xl md:text-2xl text-floral-deep mb-4 uppercase tracking-tighter">Đăng nhập để tiếp tục</h3>
+              <p className="text-stone-500/80 mb-8 md:mb-10 leading-relaxed text-sm font-medium">Bạn cần đăng nhập tài khoản thành viên để thực hiện thêm sản phẩm vào giỏ hàng.</p>
               <div className="flex flex-col gap-3">
                 <motion.button
                   whileTap={{ scale: 0.95 }}
@@ -412,18 +424,18 @@ const AppContent: React.FC = () => {
         {authModalOpen && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-6">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => { setAuthModalOpen(false); setPendingCartAction(false); }} className="absolute inset-0 bg-floral-deep/60 backdrop-blur-md" />
-            <motion.div initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 20 }} className="relative w-full max-w-md bg-white rounded-[2rem] shadow-2xl overflow-hidden p-8 md:p-10" >
+            <motion.div initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 20 }} className="relative w-full max-w-md bg-white/70 backdrop-blur-2xl rounded-[2.5rem] shadow-2xl overflow-hidden p-8 md:p-10 border border-white/40" >
               <div className="text-center mb-8 md:mb-10">
-                <div className="w-14 h-14 md:w-16 md:h-16 bg-floral-rose/10 text-floral-rose rounded-full flex items-center justify-center mx-auto mb-6">
+                <div className="w-14 h-14 md:w-16 md:h-16 bg-floral-rose/20 text-floral-rose rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
                   <Lock size={28} />
                 </div>
-                <h3 className="font-serif text-2xl md:text-3xl text-floral-deep mb-2">Đăng nhập</h3>
-                <p className="text-stone-500 text-sm">Truy cập tài khoản quản trị của bạn</p>
+                <h3 className="font-serif text-2xl md:text-3xl text-floral-deep mb-2 uppercase tracking-tighter">Đăng nhập</h3>
+                <p className="text-stone-500/80 text-sm font-medium">Truy cập tài khoản cao cấp của bạn</p>
               </div>
               {authError && <div className="p-4 bg-red-50 text-red-500 text-sm rounded-2xl border border-red-100 mb-6">{authError}</div>}
               <form onSubmit={handleLogin} className="space-y-4 md:space-y-6">
-                <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" className="w-full px-6 py-4 bg-stone-50 border border-stone-100 rounded-2xl focus:ring-2 focus:ring-floral-rose/20 outline-none text-sm" />
-                <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Mật khẩu" className="w-full px-6 py-4 bg-stone-50 border border-stone-100 rounded-2xl focus:ring-2 focus:ring-floral-rose/20 outline-none text-sm" />
+                <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" aria-label="Địa chỉ Email" className="w-full px-6 py-4 bg-stone-50 border border-stone-100 rounded-2xl focus:ring-2 focus:ring-floral-rose/20 outline-none text-sm" />
+                <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Mật khẩu" aria-label="Mật khẩu" className="w-full px-6 py-4 bg-stone-50 border border-stone-100 rounded-2xl focus:ring-2 focus:ring-floral-rose/20 outline-none text-sm" />
                 <motion.button
                   whileTap={{ scale: 0.96 }}
                   type="submit"

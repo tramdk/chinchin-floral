@@ -7,7 +7,9 @@ import { FileHandler } from './FileHandler';
 import { api } from '@/backend';
 import { useCart } from './CartContext';
 import { CartFlyingAnimation } from './CartFlyingAnimation';
-import { Interactive3DProductCard } from './Interactive3DProductCard';
+
+// Lazy load heavy 3D components
+const Interactive3DProductCard = React.lazy(() => import('./Interactive3DProductCard').then(m => ({ default: m.Interactive3DProductCard })));
 
 import { Product, Category } from '../types';
 
@@ -98,8 +100,11 @@ export const ProductSection: React.FC = () => {
   const fetchProducts = async () => {
     setLoading(true);
     try {
-      const prodsData = await api.products.getAll();
-      const catsData = await api.productCategories.getAll();
+      // Parallelize fetches to eliminate waterfalls (Vercel Best Practice: async-parallel)
+      const [prodsData, catsData] = await Promise.all([
+        api.products.getAll(),
+        api.productCategories.getAll()
+      ]);
 
       if (prodsData) {
         setDisplayProducts(prodsData);
@@ -170,15 +175,17 @@ export const ProductSection: React.FC = () => {
 
 
 
-      {/* Interactive 3D Card (Premium) */}
-      {interactiveProduct && (
-        <Interactive3DProductCard
-          product={interactiveProduct}
-          isOpen={showInteractive3D}
-          onClose={() => setShowInteractive3D(false)}
-          onAddToCart={handleAddToCart}
-        />
-      )}
+      {/* Interactive 3D Card (Premium) - Lazy Loaded */}
+      <React.Suspense fallback={null}>
+        {interactiveProduct && (
+          <Interactive3DProductCard
+            product={interactiveProduct}
+            isOpen={showInteractive3D}
+            onClose={() => setShowInteractive3D(false)}
+            onAddToCart={handleAddToCart}
+          />
+        )}
+      </React.Suspense>
 
       <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-8">
         <div className="relative">
@@ -191,6 +198,7 @@ export const ProductSection: React.FC = () => {
               onClick={fetchProducts}
               disabled={loading}
               className={`p-2 rounded-full hover:bg-floral-rose/10 transition-colors text-floral-rose ${loading ? 'animate-spin' : ''}`}
+              aria-label="Tải lại danh sách sản phẩm"
             >
               <RefreshCcw size={20} />
             </motion.button>
@@ -250,11 +258,12 @@ export const ProductSection: React.FC = () => {
               <motion.div
                 layout
                 initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
                 exit={{ opacity: 0, scale: 0.9 }}
                 transition={{ duration: 0.5 }}
                 key={product.id}
-                className="group relative cursor-pointer flex flex-col bg-white md:bg-transparent rounded-[2rem] md:rounded-none overflow-hidden transition-all duration-700"
+                className="group relative cursor-pointer flex flex-col bg-white md:bg-transparent rounded-[2rem] md:rounded-none overflow-hidden transition-all duration-700 hover:-translate-y-2"
                 onClick={() => setSelectedProduct(product)}
               >
                 {/* Image Container with sophisticated hover */}
@@ -287,7 +296,7 @@ export const ProductSection: React.FC = () => {
                         handleInteractive3D(product);
                       }}
                       className="w-10 h-10 md:w-12 md:h-12 bg-floral-rose text-white rounded-full flex items-center justify-center transition-all shadow-lg group/btn"
-                      title="Chi tiết 3D xịn xò"
+                      aria-label={`Xem chi tiết 3D của ${product.name}`}
                     >
                       <Maximize2 size={20} className="animate-pulse" />
                     </motion.button>
@@ -301,7 +310,7 @@ export const ProductSection: React.FC = () => {
                         // Handle wishlist logic if any
                       }}
                       className="w-10 h-10 md:w-12 md:h-12 bg-white/90 backdrop-blur-md rounded-full flex items-center justify-center text-stone-400 hover:text-floral-rose transition-all shadow-lg"
-                      title="Yêu thích"
+                      aria-label={`Thêm ${product.name} vào danh sách yêu thích`}
                     >
                       <Heart size={20} className="transition-transform active:scale-125" />
                     </motion.button>
@@ -383,7 +392,7 @@ export const ProductSection: React.FC = () => {
               initial={{ opacity: 0, scale: 0.9, y: 30 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 30 }}
-              className="relative w-full max-w-6xl bg-white rounded-[2rem] md:rounded-[3rem] shadow-2xl overflow-hidden flex flex-col md:flex-row h-auto md:h-[750px] max-h-[95vh] md:max-h-[92vh]"
+              className="relative w-full max-w-6xl bg-white/80 backdrop-blur-2xl rounded-[2rem] md:rounded-[3rem] shadow-2xl overflow-hidden flex flex-col md:flex-row h-auto md:h-[750px] max-h-[95vh] md:max-h-[92vh] border border-white/40"
             >
               <motion.button
                 whileHover={{ scale: 1.1, rotate: 90 }}
@@ -468,7 +477,7 @@ export const ProductSection: React.FC = () => {
           </div>
         )}
       </AnimatePresence>
-      
+
     </div>
   );
 };

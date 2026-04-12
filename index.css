@@ -73,4 +73,30 @@ h6 {
         -ms-overflow-style: none;
         scrollbar-width: none;
     }
+
+    /* Shimmer Animation */
+    @keyframes shimmer {
+        0% { background-position: -200% 0; }
+        100% { background-position: 200% 0; }
+    }
+
+    .shimmer {
+        background: linear-gradient(90deg, #f1f1f1 25%, #f9eef1 50%, #f1f1f1 75%);
+        background-size: 200% 100%;
+        animation: shimmer 2s infinite linear;
+    }
+
+    .glass-card {
+        @apply bg-white/70 backdrop-blur-2xl border border-white/40 shadow-2xl;
+    }
+
+    /* Smooth Floating */
+    @keyframes float-gentle {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-10px); }
+    }
+
+    .float-item {
+        animation: float-gentle 4s ease-in-out infinite;
+    }
 }
