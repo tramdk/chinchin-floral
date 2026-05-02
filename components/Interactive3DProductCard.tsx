@@ -12,6 +12,7 @@ import {
 } from '@react-three/drei';
 import * as THREE from 'three';
 import { FileHandler } from './FileHandler';
+import { api, triggerToast } from '../backend';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ShoppingBag, Star, Heart, Info } from 'lucide-react';
 import { Product } from '../types';
@@ -214,7 +215,7 @@ export const Interactive3DProductCard: React.FC<Interactive3DProductCardProps> =
                         </div>
 
                         {/* Right Content Section - Elegant & Air */}
-                        <div className="w-full md:w-[45%] p-8 md:p-16 flex flex-col justify-center bg-transparent z-10 h-[50vh] md:h-auto overflow-y-auto custom-scrollbar">
+                        <div className="w-full md:w-[45%] p-8 md:p-16 flex flex-col justify-center bg-transparent z-[100] h-[50vh] md:h-auto overflow-y-auto custom-scrollbar">
                             <motion.div
                                 initial={{ opacity: 0, x: 30 }}
                                 animate={{ opacity: 1, x: 0 }}
@@ -266,6 +267,7 @@ export const Interactive3DProductCard: React.FC<Interactive3DProductCardProps> =
                                     <motion.button
                                         whileHover={{ scale: 1.05, backgroundColor: '#FFF5F7' }}
                                         whileTap={{ scale: 0.95 }}
+                                        onClick={() => triggerToast("Đã thêm vào danh sách yêu thích!", "success")}
                                         className="w-14 h-14 bg-white border border-stone-200 rounded-xl flex items-center justify-center text-stone-400 hover:text-floral-rose hover:border-floral-rose/30 transition-all duration-300 shadow-sm z-50 pointer-events-auto"
                                     >
                                         <Heart size={20} />

@@ -41,6 +41,7 @@ export const ProductManager: React.FC<ProductManagerProps> = ({ products, catego
         e.preventDefault();
         try {
             const payload = {
+                id: formData.id,
                 name: formData.name,
                 description: formData.description,
                 price: Number(formData.price),

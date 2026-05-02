@@ -7,6 +7,7 @@ import { FileHandler } from './FileHandler';
 import { api } from '@/backend';
 import { useCart } from './CartContext';
 import { CartFlyingAnimation } from './CartFlyingAnimation';
+import { AddToCartButton } from './AddToCartButton';
 
 // Lazy load heavy 3D components
 const Interactive3DProductCard = React.lazy(() => import('./Interactive3DProductCard').then(m => ({ default: m.Interactive3DProductCard })));
@@ -133,16 +134,11 @@ export const ProductSection: React.FC = () => {
       return;
     }
 
-    // Trigger animation immediately for better UX
-    console.log('🌸 Triggering flying animation');
-    setFlyingObject({ image: product.image, color: '#D88C9A' });
-
+    // The new AddToCartButton component handles its own local dropping animation
     const success = await addToCart(product);
     if (success) {
-      console.log('✅ Successfully added to cart');
       setSelectedProduct(null);
     } else {
-      console.log('❌ Failed to add to cart');
       // Animation already triggered, so user still sees feedback
     }
   };
@@ -327,18 +323,10 @@ export const ProductSection: React.FC = () => {
 
                   {/* Add to Cart Overlay Button (Desktop) */}
                   <div className="hidden md:flex absolute inset-x-0 bottom-0 p-6 translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-700 ease-[cubic-bezier(0.23,1,0.32,1)] z-20">
-                    <motion.button
-                      whileHover={{ y: -4 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleAddToCart(product);
-                      }}
-                      className="w-full py-4 bg-floral-rose text-white rounded-xl font-bold text-[10px] tracking-[0.2em] uppercase flex items-center justify-center gap-3 shadow-xl hover:bg-floral-deep transition-all duration-300 group/btn"
-                    >
-                      <ShoppingBag size={16} className="transition-transform group-hover/btn:scale-110" />
-                      THÊM VÀO GIỎ
-                    </motion.button>
+                    <AddToCartButton
+                      onClick={() => handleAddToCart(product)}
+                      className="w-full py-4 bg-floral-rose text-white rounded-xl font-bold text-[10px] tracking-[0.2em] uppercase flex items-center justify-center gap-3 shadow-xl hover:bg-floral-deep transition-all duration-300"
+                    />
                   </div>
                 </div>
 
@@ -455,15 +443,10 @@ export const ProductSection: React.FC = () => {
                 </div>
 
                 <div className="mt-6 md:mt-auto flex gap-3">
-                  <motion.button
-                    whileHover={{ y: -4 }}
-                    whileTap={{ scale: 0.95 }}
+                  <AddToCartButton 
                     onClick={() => handleAddToCart(selectedProduct)}
-                    className="flex-grow py-4 md:py-5 bg-floral-deep text-white rounded-xl md:rounded-[1.2rem] font-bold text-[10px] md:text-sm tracking-[0.2em] uppercase flex items-center justify-center gap-3 md:gap-4 shadow-xl hover:bg-stone-800 transition-all duration-500"
-                  >
-                    <ShoppingBag size={20} />
-                    THÊM VÀO GIỎ HÀNG
-                  </motion.button>
+                    className="flex-grow py-4 md:py-5 bg-floral-deep text-white rounded-xl md:rounded-[1.2rem] font-bold text-[10px] md:text-sm tracking-[0.2em] uppercase shadow-xl hover:bg-stone-800"
+                  />
                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.9 }}

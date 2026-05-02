@@ -20,7 +20,6 @@ export const CartFlyingAnimation: React.FC<CartFlyingAnimationProps> = ({
     });
 
     useEffect(() => {
-        console.log('🌸 CartFlyingAnimation mounted');
         const target = document.getElementById(targetId);
         if (target) {
             const rect = target.getBoundingClientRect();
@@ -28,13 +27,10 @@ export const CartFlyingAnimation: React.FC<CartFlyingAnimationProps> = ({
                 x: rect.left + rect.width / 2,
                 y: rect.top + rect.height / 2
             });
-            console.log('🎯 Target position:', { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 });
         } else {
-            console.log('❌ Target not found:', targetId);
         }
 
         const timer = setTimeout(() => {
-            console.log('✅ Animation complete');
             onComplete();
         }, 1500);
         return () => clearTimeout(timer);

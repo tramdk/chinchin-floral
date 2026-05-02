@@ -81,7 +81,24 @@ const handleResponse = async (response: Response, originalRequest?: () => Promis
 
     if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        const errorMsg = errorData.message || `Lỗi hệ thống (${response.status})`;
+        
+        let errorMsg = errorData.message;
+        
+        // Xử lý mảng lỗi trực tiếp (vd: FluentValidation format [{PropertyName, ErrorMessage}])
+        if (Array.isArray(errorData)) {
+            errorMsg = errorData.map(e => e.ErrorMessage || e.message || JSON.stringify(e)).filter(Boolean).join('\n');
+        } 
+        // Xử lý chuẩn ProblemDetails có chứa trường errors
+        else if (errorData.errors) {
+            if (Array.isArray(errorData.errors)) {
+                errorMsg = errorData.errors.map((e: any) => e.ErrorMessage || e.message || e).filter(Boolean).join('\n');
+            } else if (typeof errorData.errors === 'object') {
+                errorMsg = Object.values(errorData.errors).flat().join('\n');
+            }
+        }
+
+        errorMsg = errorMsg || `Lỗi hệ thống (${response.status})`;
+        
         // Chỉ trigger toast nếu không phải lỗi 401 đã xử lý ở trên
         if (response.status !== 401) triggerToast(errorMsg, "error");
         throw new Error(errorMsg);

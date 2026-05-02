@@ -3,6 +3,7 @@ import React, { useRef, useMemo, useState } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { Float, MeshDistortMaterial, Sphere, Environment, Sparkles } from '@react-three/drei';
 import * as THREE from 'three';
+import { Bubbles } from './PetalRain';
 
 const Flower = ({ position, color, speed = 1, scale = 1, mouseRef }: { 
   position: [number, number, number]; 
@@ -84,15 +85,11 @@ const MiniPetal = ({ position, color, scale }: { position: [number, number, numb
   return (
     <mesh ref={ref} position={position} scale={scale} rotation={initialRotation}>
       <sphereGeometry args={[0.5, 24, 24]} />
-      <MeshDistortMaterial 
+      <meshStandardMaterial 
         color={color} 
         transparent 
-        opacity={0.4} 
-        roughness={0.2} 
-        speed={2} 
-        distort={0.4} 
-        radius={1}
-        scale={[1, 0.5, 0.1]}
+        opacity={0.6} 
+        roughness={0.4} 
       />
     </mesh>
   );
@@ -157,6 +154,7 @@ export const FloralScene = React.memo(() => {
 
         <FloatingPetals count={30} />
         <Sparkles count={40} scale={15} size={2} speed={0.2} opacity={0.4} color="#D88C9A" />
+        <Bubbles count={30} />
 
         <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, -1, 0]}>
           <ringGeometry args={[5, 5.05, 64]} />

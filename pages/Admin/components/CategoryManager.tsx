@@ -33,6 +33,7 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ categories, pr
         e.preventDefault();
         try {
             const payload = {
+                id: catFormData.id,
                 name: catFormData.name,
                 description: catFormData.description,
                 image: catFormData.image
@@ -108,7 +109,7 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ categories, pr
                         <div key={cat.id} className="bg-white p-6 md:p-8 rounded-[2rem] md:rounded-[2.5rem] shadow-sm border border-stone-100 relative group overflow-hidden transition-all hover:shadow-lg">
                             <div className="flex gap-4 md:gap-6 items-start mb-6">
                                 <div className="w-20 h-20 shrink-0 bg-stone-100 rounded-2xl overflow-hidden border border-stone-100">
-                                    <FileHandler objectId={cat.id} objectType="product" viewOnly={true} className="w-full h-full" fallbackImage={cat.image} />
+                                    <FileHandler objectId={cat.id} objectType="category" viewOnly={true} className="w-full h-full" fallbackImage={cat.image} />
                                 </div>
                                 <div className="flex-grow">
                                     <div className="w-10 h-10 bg-floral-rose/10 text-floral-rose rounded-xl flex items-center justify-center mb-3">
@@ -163,7 +164,7 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ categories, pr
                                             <label className="block text-xs font-bold uppercase tracking-widest text-stone-400 mb-2">Hình ảnh danh mục</label>
                                             <FileHandler
                                                 objectId={catFormData.id!}
-                                                objectType="product"
+                                                objectType="category"
                                                 allowUpload={true}
                                                 allowDelete={true}
                                                 onUploadSuccess={(data) => setCatFormData(prev => ({ ...prev, image: data.url || data.path }))}

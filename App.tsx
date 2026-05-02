@@ -1,9 +1,10 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Routes, Route, Link, useNavigate, useLocation, useParams } from 'react-router-dom';
 import { FloralScene } from './components/FloralScene';
 import { PetalRain } from './components/PetalRain';
 import { ProductSection } from './components/ProductSection';
+import { TikTokCarousel } from './components/TikTokCarousel';
 
 // Lazy load heavy components and pages (Vercel Best Practice: bundle-dynamic-imports)
 const AdminDashboard = React.lazy(() => import('./pages/AdminDashboard').then(m => ({ default: m.AdminDashboard })));
@@ -68,6 +69,9 @@ const Home = ({ scrollToSection }: { scrollToSection: (id: string) => void }) =>
             <FeatureItem icon={MapPin} title="Giao Tận Nơi" desc="Miễn phí vận chuyển cho các đơn hàng trong bán kính 5km." />
           </div>
         </div>
+      </section>
+      <section id="tiktok-carousel">
+        <TikTokCarousel />
       </section>
       <section id="collections" className="py-24 scroll-mt-32">
         <ProductSection />
@@ -151,6 +155,10 @@ const AppContent: React.FC = () => {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  
+  // TikTok Navbar State
+  const [pillStyle, setPillStyle] = useState({ left: 0, width: 0, opacity: 0, scale: 0.8 });
+  const navRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
   // Auto-clean stale cache
   useEffect(() => {
@@ -245,7 +253,6 @@ const AppContent: React.FC = () => {
   return (
     <div className="min-h-screen bg-floral-petal text-floral-deep selection:bg-floral-rose selection:text-white overflow-x-hidden">
       <ScrollToTop />
-      <PetalRain />
       <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${scrolled || location.pathname !== '/' ? 'bg-white/90 backdrop-blur-md shadow-sm py-4' : 'bg-transparent py-6'}`}>
         <div className="container mx-auto px-6 flex justify-between items-center">
           <Link to="/" className="flex items-center gap-2 cursor-pointer group" aria-label="Trang chủ Tiệm hoa của ChinChin">
@@ -253,18 +260,52 @@ const AppContent: React.FC = () => {
             <span className="font-serif font-bold text-2xl tracking-tighter text-floral-deep hidden sm:block">Tiệm hoa của ChinChin</span>
           </Link>
 
-          <div className="hidden lg:flex items-center gap-8 text-[12px] font-bold tracking-[0.2em] uppercase">
-            <Link to="/" className={`transition-colors ${location.pathname === '/' ? 'text-floral-rose' : 'text-floral-deep hover:text-floral-rose'}`}>Trang chủ</Link>
-            <button onClick={() => scrollToSection('collections')} className="text-floral-deep uppercase hover:text-floral-rose transition-colors">Sản phẩm</button>
-            <Link to="/posts" className={`transition-colors ${location.pathname.startsWith('/posts') ? 'text-floral-rose' : 'text-floral-deep hover:text-floral-rose'}`}>Bài viết</Link>
-            <Link to="/about" className={`transition-colors ${location.pathname === '/about' ? 'text-floral-rose' : 'text-floral-deep hover:text-floral-rose'}`}>Về chúng tôi</Link>
+          <div className="hidden lg:flex items-center gap-6">
+            {/* TikTok-Style Modern Pill Navbar */}
+            <div 
+              className="flex items-center p-1.5 bg-white/20 backdrop-blur-xl border border-white/40 shadow-[0_15px_35px_rgba(0,0,0,0.05)] rounded-full relative"
+              onMouseLeave={() => setPillStyle(prev => ({ ...prev, opacity: 0, scale: 0.8 }))}
+            >
+              {/* Sliding Indicator */}
+              <div 
+                className="absolute top-1.5 bottom-1.5 left-0 bg-floral-rose rounded-full shadow-[0_0_15px_rgba(216,140,154,0.6)] transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] pointer-events-none"
+                style={{
+                  transform: `translateX(${pillStyle.left}px) scale(${pillStyle.scale})`,
+                  width: `${pillStyle.width}px`,
+                  opacity: pillStyle.opacity,
+                }}
+              />
 
-            {user?.role === 'admin' && (
-              <Link to="/admin" className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${location.pathname === '/admin' ? 'bg-floral-rose text-white shadow-lg shadow-floral-rose/20' : 'text-floral-gold hover:bg-floral-gold/10'}`}>
-                <Settings size={16} />
-                <span>QUẢN LÝ</span>
-              </Link>
-            )}
+              {[
+                { label: 'Trang chủ', action: () => navigate('/'), isActive: location.pathname === '/' },
+                { label: 'Sản phẩm', action: () => { if(location.pathname !== '/') navigate('/'); setTimeout(() => scrollToSection('collections'), 100); }, isActive: false },
+                { label: 'Bài viết', action: () => navigate('/posts'), isActive: location.pathname.startsWith('/posts') },
+                { label: 'Về chúng tôi', action: () => navigate('/about'), isActive: location.pathname === '/about' },
+                ...(user?.role === 'admin' ? [{ label: 'Quản lý', action: () => navigate('/admin'), isActive: location.pathname === '/admin' }] : [])
+              ].map((item, i) => (
+                <button
+                  key={i}
+                  ref={el => navRefs.current[i] = el}
+                  onMouseEnter={() => {
+                    const el = navRefs.current[i];
+                    if (el) {
+                      setPillStyle({
+                        left: el.offsetLeft,
+                        width: el.offsetWidth,
+                        opacity: 1,
+                        scale: 1
+                      });
+                    }
+                  }}
+                  onClick={item.action}
+                  className={`relative z-10 px-6 py-2.5 text-[12px] font-bold tracking-[0.2em] uppercase transition-colors duration-300 rounded-full ${
+                    item.isActive && pillStyle.opacity === 0 ? 'text-floral-rose' : 'text-floral-deep hover:text-white'
+                  }`}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
 
             <div className="h-6 w-[1px] bg-stone-200" />
 
@@ -384,7 +425,7 @@ const AppContent: React.FC = () => {
       {/* Login Prompt Modal */}
       <AnimatePresence>
         {loginPromptOpen && (
-          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 md:p-6">
+          <div className="fixed inset-0 z-[500] flex items-center justify-center p-4 md:p-6">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setLoginPromptOpen(false)} className="absolute inset-0 bg-floral-deep/60 backdrop-blur-md" />
             <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="relative w-full max-w-sm bg-white/70 backdrop-blur-2xl rounded-[2.5rem] p-8 md:p-10 text-center shadow-2xl border border-white/40">
               <div className="w-16 h-16 md:w-20 md:h-20 bg-floral-rose/20 text-floral-rose rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
@@ -422,7 +463,7 @@ const AppContent: React.FC = () => {
 
       <AnimatePresence>
         {authModalOpen && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-6">
+          <div className="fixed inset-0 z-[500] flex items-center justify-center p-4 md:p-6">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => { setAuthModalOpen(false); setPendingCartAction(false); }} className="absolute inset-0 bg-floral-deep/60 backdrop-blur-md" />
             <motion.div initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 20 }} className="relative w-full max-w-md bg-white/70 backdrop-blur-2xl rounded-[2.5rem] shadow-2xl overflow-hidden p-8 md:p-10 border border-white/40" >
               <div className="text-center mb-8 md:mb-10">

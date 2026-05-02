@@ -46,14 +46,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 const currentTime = Date.now() / 1000;
 
                 if (decoded.exp && decoded.exp < currentTime) {
-                    console.log("Token expired on init check");
                     logout();
                     addToast("Phiên đăng nhập đã hết hạn.", "info");
                 } else {
                     setUser(JSON.parse(savedUser));
                 }
             } catch (e) {
-                console.error("Invalid token on init check", e);
                 logout();
             }
         } else {

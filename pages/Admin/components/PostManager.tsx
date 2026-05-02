@@ -42,6 +42,7 @@ export const PostManager: React.FC<PostManagerProps> = ({ posts, postCategories,
         e.preventDefault();
         try {
             const payload = {
+                id: postFormData.id,
                 title: postFormData.title,
                 content: postFormData.content,
                 excerpt: postFormData.excerpt,
