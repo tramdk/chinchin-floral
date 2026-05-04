@@ -30,7 +30,7 @@ interface UploadingFile {
 
 interface FileHandlerProps {
     objectId: string | number;
-    objectType: 'product' | 'post' | 'user' | 'review';
+    objectType: 'product' | 'post' | 'user' | 'review' | 'category';
     className?: string;
 
     // View/Logic Props

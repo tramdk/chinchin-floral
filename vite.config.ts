@@ -10,12 +10,12 @@ export default defineConfig(({ mode }) => {
       host: '0.0.0.0',
       proxy: {
         '/api': {
-          target: 'http://localhost:5000',
+          target: 'http://localhost:8080',
           changeOrigin: true,
           secure: false,
         },
         '/hubs': {
-          target: 'http://localhost:5000',
+          target: 'http://localhost:8080',
           ws: true,
           changeOrigin: true,
           secure: false,

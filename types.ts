@@ -65,3 +65,11 @@ export interface UserProfile {
   email: string;
   role: 'admin' | 'user';
 }
+
+export interface ApiResponse<T> {
+  success: boolean;
+  data: T;
+  message?: string;
+  errors?: string[];
+  timestamp: string;
+}

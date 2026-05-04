@@ -70,6 +70,7 @@ const handleRefreshToken = async (): Promise<string | null> => {
 
 // Helper: Xử lý phản hồi an toàn
 const handleResponse = async (response: Response, originalRequest?: () => Promise<unknown>): Promise<unknown> => {
+    // 1. Refresh token logic cho 401
     if (response.status === 401 && originalRequest) {
         const newToken = await handleRefreshToken();
         if (newToken) {
@@ -79,34 +80,63 @@ const handleResponse = async (response: Response, originalRequest?: () => Promis
         throw new Error("Unauthorized");
     }
 
-    if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
+    // 2. Trả về true cho 204 No Content
+    if (response.status === 204) return true;
+
+    // 3. Parse body một lần duy nhất
+    let result: any;
+    try {
+        result = await response.json();
+    } catch (e) {
+        result = {};
+    }
+
+    // 4. Kiểm tra cấu trúc ApiResponse (Success, Data, Message, Errors)
+    if (result && typeof result === 'object' && 'success' in result) {
+        if (!result.success) {
+            let errorMsg = result.message;
+            
+            if (result.errors && Array.isArray(result.errors)) {
+                const combinedErrors = result.errors.join('\n');
+                if (combinedErrors) errorMsg = errorMsg ? `${errorMsg}\n${combinedErrors}` : combinedErrors;
+            }
+
+            errorMsg = errorMsg || `Lỗi hệ thống (${response.status})`;
+            
+            if (response.status !== 401) triggerToast(errorMsg, "error");
+            throw new Error(errorMsg);
+        }
         
-        let errorMsg = errorData.message;
+        // Trả về phần data bên trong
+        return result.data;
+    }
+
+    // 5. Fallback cho các phản hồi không theo chuẩn mới hoặc lỗi không được filter bắt
+    if (!response.ok) {
+        let errorMsg = result.message;
         
         // Xử lý mảng lỗi trực tiếp (vd: FluentValidation format [{PropertyName, ErrorMessage}])
-        if (Array.isArray(errorData)) {
-            errorMsg = errorData.map(e => e.ErrorMessage || e.message || JSON.stringify(e)).filter(Boolean).join('\n');
+        if (Array.isArray(result)) {
+            errorMsg = result.map(e => e.ErrorMessage || e.message || JSON.stringify(e)).filter(Boolean).join('\n');
         } 
         // Xử lý chuẩn ProblemDetails có chứa trường errors
-        else if (errorData.errors) {
-            if (Array.isArray(errorData.errors)) {
-                errorMsg = errorData.errors.map((e: any) => e.ErrorMessage || e.message || e).filter(Boolean).join('\n');
-            } else if (typeof errorData.errors === 'object') {
-                errorMsg = Object.values(errorData.errors).flat().join('\n');
+        else if (result.errors) {
+            if (Array.isArray(result.errors)) {
+                errorMsg = result.errors.map((e: any) => e.ErrorMessage || e.message || e).filter(Boolean).join('\n');
+            } else if (typeof result.errors === 'object') {
+                errorMsg = Object.values(result.errors).flat().join('\n');
             }
         }
 
         errorMsg = errorMsg || `Lỗi hệ thống (${response.status})`;
         
-        // Chỉ trigger toast nếu không phải lỗi 401 đã xử lý ở trên
         if (response.status !== 401) triggerToast(errorMsg, "error");
         throw new Error(errorMsg);
     }
 
-    if (response.status === 204) return true;
-    return response.json().catch(() => ({}));
+    return result;
 };
+
 
 const fetchWithAuth = async <T>(url: string, options: RequestOptions = {}): Promise<T> => {
     const makeRequest = async () => {
@@ -260,6 +290,9 @@ export const api = {
         get: () => fetchWithAuth<any>(ENDPOINTS.CART.BASE),
         add: (productId: any, quantity: number = 1) => fetchWithAuth<any>(ENDPOINTS.CART.ADD, { method: 'POST', body: { productId, quantity } }),
         remove: (productId: string | number) => fetchWithAuth<any>(ENDPOINTS.CART.REMOVE(productId), { method: 'DELETE' }),
+    },
+    auth: {
+        login: (credentials: any) => safeFetch<any>(ENDPOINTS.AUTH.LOGIN, { method: 'POST', body: credentials }),
     }
 };
 

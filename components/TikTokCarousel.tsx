@@ -41,7 +41,7 @@ export const TikTokCarousel: React.FC = () => {
   const navigate = useNavigate();
   const carouselRef = useRef<HTMLDivElement>(null);
   const angleRef = useRef(0);
-  const requestRef = useRef<number>();
+  const requestRef = useRef<number>(undefined);
 
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [items, setItems] = useState<any[]>([]);

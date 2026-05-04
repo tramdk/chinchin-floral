@@ -20,7 +20,7 @@ import { CartProvider, useCart } from './components/CartContext';
 import { AuthProvider, useAuth } from './components/AuthContext';
 import { ToastProvider, useToast } from './components/ToastContext';
 import { UserProfile } from './types';
-import { checkCacheValidity } from './backend';
+import api, { checkCacheValidity } from './backend';
 
 const ScrollToTop = () => {
   const { pathname } = useLocation();
@@ -186,42 +186,33 @@ const AppContent: React.FC = () => {
     setAuthError(null);
 
     try {
-      const response = await fetch(ENDPOINTS.AUTH.LOGIN, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
-      });
+      const data = await api.auth.login({ email, password });
 
-      if (response.ok) {
-        const data = await response.json();
-        const userProfile: UserProfile = {
-          name: data.user?.fullName || 'Thành viên',
-          email: data.user.email,
-          role: data.user?.roles.length ? data.user?.roles[0]?.toLowerCase() : 'user'
-        };
+      const userProfile: UserProfile = {
+        name: data.user?.fullName || 'Thành viên',
+        email: data.user.email,
+        role: data.user?.roles?.length ? data.user.roles[0].toLowerCase() : 'user'
+      };
 
-        // Use AuthContext login
-        login(data.token || data.accessToken, data.refreshToken, userProfile);
+      // Use AuthContext login
+      login(data.token || data.accessToken, data.refreshToken, userProfile);
 
-        setAuthModalOpen(false);
-        setEmail('');
-        setPassword('');
-        addToast(`Chào mừng trở lại, ${userProfile.name}!`, 'success');
+      setAuthModalOpen(false);
+      setEmail('');
+      setPassword('');
+      addToast(`Chào mừng trở lại, ${userProfile.name}!`, 'success');
 
-        if (pendingCartAction) {
-          setPendingCartAction(false);
-          navigate('/cart');
-        }
-      } else {
-        setAuthError('Email hoặc mật khẩu không chính xác');
-        addToast('Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.', 'error');
+      if (pendingCartAction) {
+        setPendingCartAction(false);
+        navigate('/cart');
       }
-    } catch (err) {
-      setAuthError('Không thể kết nối đến máy chủ');
-      addToast('Lỗi kết nối máy chủ.', 'error');
+    } catch (err: any) {
+      setAuthError(err.message || 'Email hoặc mật khẩu không chính xác');
+      // Toast already triggered by handleResponse in backend.ts
     } finally {
       setAuthLoading(false);
     }
+
   };
 
   const handleLogout = () => {
@@ -285,7 +276,7 @@ const AppContent: React.FC = () => {
               ].map((item, i) => (
                 <button
                   key={i}
-                  ref={el => navRefs.current[i] = el}
+                  ref={el => { navRefs.current[i] = el; }}
                   onMouseEnter={() => {
                     const el = navRefs.current[i];
                     if (el) {

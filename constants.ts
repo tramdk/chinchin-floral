@@ -1,7 +1,7 @@
 
 // export const BACKEND_URL = 'http://localhost:5000';
 export const BACKEND_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
-export const API_BASE = `${BACKEND_URL}/api`;
+export const API_BASE = `${BACKEND_URL}/api/v1`;
 
 export const ENDPOINTS = {
     AUTH: {

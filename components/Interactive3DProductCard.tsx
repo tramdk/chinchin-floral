@@ -188,7 +188,7 @@ export const Interactive3DProductCard: React.FC<Interactive3DProductCardProps> =
                                         rotation={[0, 0.1, 0]}
                                         polar={[-Math.PI / 12, Math.PI / 12]}
                                         azimuth={[-Math.PI / 8, Math.PI / 8]}
-                                        config={{ mass: 1, tension: 170, friction: 26 }} // Smoother return spring
+                                        snap={true} // Smoother return spring
                                     >
                                         <ProductExhibit product={product} />
                                     </PresentationControls>
